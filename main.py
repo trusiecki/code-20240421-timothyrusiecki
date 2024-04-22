@@ -10,7 +10,7 @@ location = r'C:\interview_analysis_molecule_x_10mg_v1.tsv'
 df = pd.read_csv(filepath_or_buffer=location, sep='\t')
 
 # define lambdas to apply to columns, 1. to validate numbers, 2. to split multiple data entries into lists
-descientifise = lambda x: format(float(x),'f')
+desci_func = lambda x: format(float(x),'8f')
 split_func = lambda x: x.split('|')
 
 # specify columns to apply functions to
@@ -28,7 +28,16 @@ df_2 = df.explode(explodable)
 
 # validate that numbers are read properly
 for item in numerical:
-    map_column(df_2,item,descientifise)
+    map_column(df_2,item,desci_func)
+
+# Create a winner_price check by comparing it with the actual smallest participants_price within each contract_id
+df_2['price_min'] = df_2.groupby('contract_id')['participants_price'].min().map(desci_func).shift(-1)
+df_2['price_check'] = df_2['price_min'] == df_2['winner_price']
+df_2.drop('price_min')
+
+# CONCLUSION
+# winner_price has been validated (the Boolean in price_check) to be correct to the extent to which I have been able to understand the data without exposure to more data/a stakeholder/an SME.
+# The first row was validated manually, not using the process above, as the time to debug the process above to cover it was so much greater than the time to do a visual check in this context.
 
 # ROADMAP
 # Conversations with stakeholders would establish how the initial dataset is created and whether first-line-of-defence data validation is applied at a previous stage (as some columns would suggest).
@@ -38,7 +47,6 @@ for item in numerical:
 
 # FURTHER POSSIBLE VALIDATIONS
 # While this particular dataset did not present such problems, and its size did not warrant further automations at this stage, in a larger amount of data, I would check things such as whether:
-# winner_price is actually the lowest participant_price when grouped by contract_id
 # second_place_outcome is not blank when second_place and second_place_price are not, and vice versa
 # number of participants matches the number of participants and participant prices listed
 # quantity numbers make sense (after a conversation with an SME to establish what they represent)
